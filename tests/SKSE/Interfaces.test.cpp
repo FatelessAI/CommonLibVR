@@ -29,6 +29,8 @@ TEST_CASE("PluginDeclaration/ConstinitDeclaration")
 		CHECK(WithAddressLibrary.GetRuntimeCompatibility().IsVersionIndependent());
 		CHECK(WithAddressLibrary.GetRuntimeCompatibility().UsesAddressLibrary());
 		CHECK(!WithAddressLibrary.GetRuntimeCompatibility().UsesSignatureScanning());
+		CHECK(WithAddressLibrary.DeclaresAddressLibraryV5());
+		CHECK(WithAddressLibrary.GetStructCompatibility() == StructCompatibility::Independent);
 	}
 	SECTION("With specific runtime compatibility")
 	{
@@ -37,6 +39,8 @@ TEST_CASE("PluginDeclaration/ConstinitDeclaration")
 		CHECK(!ForSpecificRuntimes.GetRuntimeCompatibility().IsVersionIndependent());
 		CHECK(!ForSpecificRuntimes.GetRuntimeCompatibility().UsesAddressLibrary());
 		CHECK(!ForSpecificRuntimes.GetRuntimeCompatibility().UsesSignatureScanning());
+		CHECK(!ForSpecificRuntimes.DeclaresAddressLibraryV5());
+		CHECK(ForSpecificRuntimes.GetStructCompatibility() == StructCompatibility::Independent);
 		CHECK(static_cast<REL::Version>(ForSpecificRuntimes.GetRuntimeCompatibility().GetCompatibleRuntimeVersions()[0]) == "1.5.97.0"_v);
 		CHECK(static_cast<REL::Version>(ForSpecificRuntimes.GetRuntimeCompatibility().GetCompatibleRuntimeVersions()[1]) == "1.6.353.0"_v);
 	}
@@ -44,6 +48,14 @@ TEST_CASE("PluginDeclaration/ConstinitDeclaration")
 	{
 		CHECK(std::string(SKSEPlugin_Version.GetName()) == "Plugin");
 		CHECK(SKSEPlugin_Version.GetVersion() == "1.2.3.4"_v);
+	}
+	SECTION("Exports the SKSE version-independence bits")
+	{
+		const auto* exported = reinterpret_cast<const PluginVersionData*>(&SKSEPlugin_Version);
+		CHECK(exported->dataVersion == PluginVersionData::kVersion);
+		CHECK((exported->versionIndependence & PluginVersionData::kVersionIndependent_AddressLibraryPostAE) != 0);
+		CHECK((exported->versionIndependenceEx & PluginVersionData::kVersionIndependentEx_NoStructUse) != 0);
+		CHECK((exported->versionIndependenceEx & PluginVersionData::kVersionIndependentEx_AddressLibraryV5) != 0);
 	}
 }
 

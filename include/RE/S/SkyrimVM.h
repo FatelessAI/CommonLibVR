@@ -279,11 +279,21 @@ namespace RE
             RUNTIME_DATA2_CONTENT
 		};
 
-		RUNTIME_DATA_ACCESSOR(RUNTIME_DATA, 0x754, 0);
+		// Skyrim 1.7.99 grew this object by 0x10 ahead of the member block, so every member from impl
+		// onward, and both runtime-data tails, sit 0x10 higher on 1.7.99 and later. The member
+		// declarations below describe the layout before that release; read the moved members through
+		// these accessors.
+		RUNTIME_MEMBER_ACCESSOR_VERSIONED(RUNTIME_DATA, GetRuntimeData, SKSE::RUNTIME_SSE_1_7_99, 0x754, 0, 0x764);
 
 		VR_RUNTIME_DATA_ACCESSOR(VR_RUNTIME_DATA, GetVRRuntimeData, 0x754);
 
-		RUNTIME_DATA_ACCESSOR_EX(RUNTIME_DATA2, GetRuntimeData2, 0x760, 0x780);
+		RUNTIME_MEMBER_ACCESSOR_VERSIONED(RUNTIME_DATA2, GetRuntimeData2, SKSE::RUNTIME_SSE_1_7_99, 0x760, 0x780, 0x770);
+
+		RUNTIME_DATA_ACCESSOR_VERSIONED_EX(BSTSmartPointer<BSScript::IVirtualMachine>, GetImpl, SKSE::RUNTIME_SSE_1_7_99, 0x200, 0x210);
+		RUNTIME_DATA_ACCESSOR_VERSIONED_EX(BSScript::CompiledScriptLoader, GetScriptLoader, SKSE::RUNTIME_SSE_1_7_99, 0x240, 0x250);
+		RUNTIME_DATA_ACCESSOR_VERSIONED_EX(SkyrimScript::HandlePolicy, GetHandlePolicy, SKSE::RUNTIME_SSE_1_7_99, 0x328, 0x338);
+		RUNTIME_DATA_ACCESSOR_VERSIONED_EX(SkyrimScript::ObjectBindPolicy, GetObjectBindPolicy, SKSE::RUNTIME_SSE_1_7_99, 0x398, 0x3A8);
+
 		static SkyrimVM* GetSingleton();
 
 		bool QueuePostRenderCall(const BSTSmartPointer<SkyrimScript::DelayFunctor>& a_functor);
@@ -294,7 +304,7 @@ namespace RE
 		// (see BSScript::IFreezeQuery) or a timeout.
 		void Freeze();
 
-		// members
+		// members (pre-1.7.99 offsets; see the accessors above)
 		BSTSmartPointer<BSScript::IVirtualMachine> impl;                       // 0200
 		BSScript::IVMSaveLoadInterface*            saveLoadInterface;          // 0208
 		BSScript::IVMDebugInterface*               debugInterface;             // 0210

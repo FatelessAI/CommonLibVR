@@ -93,14 +93,18 @@ namespace REL
 
 	IDDatabase IDDatabase::_instance;
 
-	bool IDDatabase::load_file(stl::zwstring a_filename, Version a_version, std::uint8_t a_formatVersion, bool a_failOnError)
+	bool IDDatabase::load_file(stl::zwstring a_filename, Version a_version, std::initializer_list<std::int32_t> a_acceptedFormats, bool a_failOnError)
 	{
 		try {
 			istream_t in(a_filename.data(), std::ios::in | std::ios::binary);
 			header_t  header;
-			header.read(in, a_formatVersion);
+			header.read(in, a_acceptedFormats);
 			if (header.version() != a_version) {
 				return stl::report_and_error("version mismatch"sv, a_failOnError);
+			}
+
+			if (header.is_dense()) {
+				return load_dense(in, header, a_version, a_failOnError);
 			}
 
 			auto mapname = L"CommonLibSSEOffsets-v2-"s;
@@ -128,6 +132,41 @@ namespace REL
 					stl::utf16_to_utf8(a_filename).value_or("<unknown filename>"s)),
 				a_failOnError);
 			return false;
+		}
+
+		return true;
+	}
+
+	bool IDDatabase::load_dense(istream_t& a_in, const header_t& a_header, Version a_version, bool a_failOnError)
+	{
+		// One 32-bit offset per ID, indexed by the ID itself; zero means the ID has no address in this
+		// version. The table is folded into the same sorted (id, offset) pairs the other formats produce
+		// so lookups, Offset2ID and the shared mapping behave the same way for every format. The mapping
+		// name is specific to this library: other libraries may lay their format-5 tables out differently.
+		std::vector<std::uint32_t> table(a_header.address_count());
+		a_in.readin(std::span{ table });
+
+		const auto present = static_cast<std::size_t>(
+			std::count_if(table.begin(), table.end(), [](std::uint32_t a_offset) { return a_offset != 0; }));
+		if (present == 0) {
+			return stl::report_and_error("address library has no entries"sv, a_failOnError);
+		}
+
+		auto mapname = L"CommonLibVR-Offsets-f5-"s;
+		mapname += a_version.wstring();
+		const auto byteSize = present * sizeof(mapping_t);
+		if (_mmap.open(mapname, byteSize)) {
+			_id2offset = { static_cast<mapping_t*>(_mmap.data()), present };
+		} else if (_mmap.create(mapname, byteSize)) {
+			_id2offset = { static_cast<mapping_t*>(_mmap.data()), present };
+			std::size_t next = 0;
+			for (std::size_t id = 0; id < table.size(); ++id) {
+				if (table[id] != 0) {
+					_id2offset[next++] = { static_cast<std::uint64_t>(id), static_cast<std::uint64_t>(table[id]) };
+				}
+			}
+		} else {
+			return stl::report_and_error("failed to create shared mapping"sv, a_failOnError);
 		}
 
 		return true;

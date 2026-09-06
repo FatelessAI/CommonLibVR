@@ -65,8 +65,22 @@ namespace REL
 		{
 			SSEv1,
 			SSEv2,
-			VR
+			VR,
+			SSEv5
 		};
+
+		/**
+		 * The address library file formats this database reads.
+		 *
+		 * <p>
+		 * Formats 1 and 2 (Skyrim SE up to 1.5.97 and AE up to 1.6.1179) store a delta-compressed list of
+		 * (id, offset) pairs. Format 5 (Skyrim 1.7.99 and later) stores one 32-bit offset per ID in a dense
+		 * table indexed by the ID itself, with zero marking an ID that has no address in that version.
+		 * </p>
+		 */
+		static constexpr std::int32_t kFormatSE = 1;
+		static constexpr std::int32_t kFormatAE = 2;
+		static constexpr std::int32_t kFormatDense = 5;
 
 		class Offset2ID
 		{
@@ -150,9 +164,11 @@ namespace REL
 			_instance.clear();
 			switch (a_format) {
 			case Format::SSEv1:
-				return _instance.load_file(a_filePath.data(), a_version, 1, false);
+				return _instance.load_file(a_filePath.data(), a_version, { kFormatSE }, false);
 			case Format::SSEv2:
-				return _instance.load_file(a_filePath.data(), a_version, 2, false);
+				return _instance.load_file(a_filePath.data(), a_version, { kFormatAE }, false);
+			case Format::SSEv5:
+				return _instance.load_file(a_filePath.data(), a_version, { kFormatDense }, false);
 #	ifdef ENABLE_SKYRIM_VR
 			case Format::VR:
 				return _instance.load_csv(a_filePath.data(), a_version, false);
@@ -234,6 +250,12 @@ namespace REL
 				_stream.read(reinterpret_cast<char*>(std::addressof(a_val)), sizeof(T));
 			}
 
+			template <class T>
+			inline void readin(std::span<T> a_vals)
+			{
+				_stream.read(reinterpret_cast<char*>(a_vals.data()), static_cast<std::streamsize>(a_vals.size_bytes()));
+			}
+
 			template <
 				class T,
 				std::enable_if_t<
@@ -253,33 +275,45 @@ namespace REL
 		class header_t
 		{
 		public:
-			void read(istream_t& a_in, std::uint8_t a_formatVersion)
+			void read(istream_t& a_in, std::initializer_list<std::int32_t> a_acceptedFormats)
 			{
-				std::int32_t format{};
-				a_in.readin(format);
-				if (format != a_formatVersion) {
+				a_in.readin(_format);
+				if (std::find(a_acceptedFormats.begin(), a_acceptedFormats.end(), _format) == a_acceptedFormats.end()) {
 					stl::report_and_fail(
 						std::format(
 							"Unsupported address library format: {}\n"
 							"This means this script extender plugin is incompatible with the address "
 							"library available for this version of the game, and thus does not "
 							"support it."sv,
-							format));
+							_format));
 				}
 
 				std::int32_t version[4]{};
-				std::int32_t nameLen{};
 				a_in.readin(version);
-				a_in.readin(nameLen);
-				a_in.ignore(nameLen);
 
-				a_in.readin(_pointerSize);
-				a_in.readin(_addressCount);
+				if (_format == kFormatDense) {
+					// A fixed-size module name field, the pointer size, one reserved dword, then the number
+					// of entries in the table that follows the header.
+					a_in.ignore(kDenseNameLength);
+					a_in.readin(_pointerSize);
+					a_in.ignore(sizeof(std::int32_t));
+					a_in.readin(_addressCount);
+				} else {
+					std::int32_t nameLen{};
+					a_in.readin(nameLen);
+					a_in.ignore(nameLen);
+					a_in.readin(_pointerSize);
+					a_in.readin(_addressCount);
+				}
 
 				for (std::size_t i = 0; i < std::extent_v<decltype(version)>; ++i) {
 					_version[i] = static_cast<std::uint16_t>(version[i]);
 				}
 			}
+
+			[[nodiscard]] std::int32_t format() const noexcept { return _format; }
+
+			[[nodiscard]] bool is_dense() const noexcept { return _format == kFormatDense; }
 
 			[[nodiscard]] std::size_t address_count() const noexcept { return static_cast<std::size_t>(_addressCount); }
 
@@ -288,7 +322,10 @@ namespace REL
 			[[nodiscard]] Version version() const noexcept { return _version; }
 
 		private:
+			static constexpr std::streamsize kDenseNameLength = 64;
+
 			Version      _version;
+			std::int32_t _format{ 0 };
 			std::int32_t _pointerSize{ 0 };
 			std::int32_t _addressCount{ 0 };
 		};
@@ -320,13 +357,19 @@ namespace REL
 							std::format("Data/SKSE/Plugins/versionlib-{}.bin"sv, version.string()) :
 							std::format("Data/SKSE/Plugins/version-{}.bin"sv, version.string()))
 						.value_or(L"<unknown filename>"s);
-				load_file(filename, version, Module::IsAE() ? 2 : 1, true);
+				if SKYRIM_REL_CONSTEXPR (Module::IsAE()) {
+					load_file(filename, version, { kFormatAE, kFormatDense }, true);
+				} else {
+					load_file(filename, version, { kFormatSE }, true);
+				}
 #ifdef ENABLE_SKYRIM_VR
 			}
 #endif
 		}
 
-		bool load_file(stl::zwstring a_filename, Version a_version, std::uint8_t a_formatVersion, bool a_failOnError);
+		bool load_file(stl::zwstring a_filename, Version a_version, std::initializer_list<std::int32_t> a_acceptedFormats, bool a_failOnError);
+
+		bool load_dense(istream_t& a_in, const header_t& a_header, Version a_version, bool a_failOnError);
 
 #ifdef ENABLE_SKYRIM_VR
 		bool load_csv(stl::zwstring a_filename, Version a_version, bool a_failOnError);

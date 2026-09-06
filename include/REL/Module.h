@@ -79,6 +79,23 @@ namespace REL
 			VR = 1 << 2
 		};
 
+		/**
+		 * Classify a Skyrim runtime from the executable's file version.
+		 *
+		 * <p>
+		 * Skyrim VR reports 1.4.x. Flat Skyrim with a minor version of 6 or higher is an Anniversary Edition
+		 * runtime: 1.6.x and 1.7.x (1.7.99 and later) share the post-AE engine, so every AE gate applies to both.
+		 * Anything else is a pre-AE Special Edition runtime.
+		 * </p>
+		 */
+		[[nodiscard]] static constexpr Runtime ClassifyRuntime(const Version& a_version) noexcept
+		{
+			if (a_version[1] == 4) {
+				return Runtime::VR;
+			}
+			return a_version[1] >= 6 ? Runtime::AE : Runtime::SE;
+		}
+
 		[[nodiscard]] static Module& get()
 		{
 			if (_initialized.load(std::memory_order_relaxed)) {
@@ -163,20 +180,7 @@ namespace REL
 
 			_instance._filename = _instance._filePath = a_filename.data();
 			_instance._version = a_version;
-			if (a_runtime == Runtime::Unknown) {
-				switch (a_version[1]) {
-				case 4:
-					_instance._runtime = Runtime::VR;
-					break;
-				case 6:
-					_instance._runtime = Runtime::AE;
-					break;
-				default:
-					_instance._runtime = Runtime::SE;
-				}
-			} else {
-				_instance._runtime = a_runtime;
-			}
+			_instance._runtime = a_runtime == Runtime::Unknown ? ClassifyRuntime(a_version) : a_runtime;
 			_instance._base = a_base;
 
 			auto currentAddress = a_base + 0x1000;
@@ -336,16 +340,7 @@ namespace REL
 			const auto version = GetFileVersion(_filePath);
 			if (version) {
 				_version = *version;
-				switch (_version[1]) {
-				case 4:
-					_runtime = Runtime::VR;
-					break;
-				case 6:
-					_runtime = Runtime::AE;
-					break;
-				default:
-					_runtime = Runtime::SE;
-				}
+				_runtime = ClassifyRuntime(_version);
 				return true;
 			}
 			return stl::report_and_error(

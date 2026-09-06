@@ -311,6 +311,73 @@ TEST_CASE("Module/SupportsSkyrimAE_1_6_1170")
 	}
 }
 
+TEST_CASE("Module/ClassifyRuntime")
+{
+	CHECK(REL::Module::ClassifyRuntime(SKSE::RUNTIME_SSE_1_5_97) == REL::Module::Runtime::SE);
+	CHECK(REL::Module::ClassifyRuntime(SKSE::RUNTIME_VR_1_4_15) == REL::Module::Runtime::VR);
+	CHECK(REL::Module::ClassifyRuntime(SKSE::RUNTIME_SSE_1_6_353) == REL::Module::Runtime::AE);
+	CHECK(REL::Module::ClassifyRuntime(SKSE::RUNTIME_SSE_1_6_1170) == REL::Module::Runtime::AE);
+	CHECK(REL::Module::ClassifyRuntime(SKSE::RUNTIME_SSE_1_7_99) == REL::Module::Runtime::AE);
+	CHECK(REL::Module::ClassifyRuntime(SKSE::RUNTIME_SSE_1_7_104) == REL::Module::Runtime::AE);
+}
+
+TEST_CASE("Module/SupportsSkyrimAE_1_7_99")
+{
+	SECTION("Runtime is mockable and classified as AE")
+	{
+		REQUIRE(REL::Module::mock(SKSE::RUNTIME_SSE_1_7_99, REL::Module::Runtime::Unknown, L"SkyrimSE.exe", 0x1000));
+		CHECK(REL::Module::IsAE());
+	}
+	SECTION("Address Library format 5 can be loaded")
+	{
+		CHECK(REL::IDDatabase::inject(
+			L"Data\\SKSE\\Plugins\\versionlib-1-7-99-0.bin", REL::IDDatabase::Format::SSEv5, SKSE::RUNTIME_SSE_1_7_99));
+	}
+	SECTION("Lookup by ID returns the correct offset")
+	{
+		CHECK(REL::IDDatabase::get().id2offset(1) == 0x1022);
+		CHECK(REL::IDDatabase::get().id2offset(11483) == 0x155260);
+		CHECK(REL::IDDatabase::get().id2offset(400475) == 0x21a36e0);
+	}
+	SECTION("IDs without an address are left out of the table")
+	{
+		REL::IDDatabase::Offset2ID offset2id;
+		CHECK(offset2id.size() == 435154);
+	}
+	SECTION("ID database and module can be reset")
+	{
+		REL::Module::reset();
+	}
+}
+
+TEST_CASE("Module/SupportsSkyrimAE_1_7_104")
+{
+	SECTION("Runtime is mockable and classified as AE")
+	{
+		REQUIRE(REL::Module::mock(SKSE::RUNTIME_SSE_1_7_104, REL::Module::Runtime::Unknown, L"SkyrimSE.exe", 0x1000));
+		CHECK(REL::Module::IsAE());
+	}
+	SECTION("Address Library format 5 can be loaded")
+	{
+		CHECK(REL::IDDatabase::inject(
+			L"Data\\SKSE\\Plugins\\versionlib-1-7-104-0.bin", REL::IDDatabase::Format::SSEv5, SKSE::RUNTIME_SSE_1_7_104));
+	}
+	SECTION("Lookup by ID returns the correct offset")
+	{
+		CHECK(REL::IDDatabase::get().id2offset(11483) == 0x155260);
+		CHECK(REL::IDDatabase::get().id2offset(54033) == 0x9e3580);
+	}
+	SECTION("IDs without an address are left out of the table")
+	{
+		REL::IDDatabase::Offset2ID offset2id;
+		CHECK(offset2id.size() == 435162);
+	}
+	SECTION("ID database and module can be reset")
+	{
+		REL::Module::reset();
+	}
+}
+
 TEST_CASE("Module/SupportsSkyrimAE_1_6_1179_GOG")
 {
 	SECTION("Runtime is mockable")

@@ -375,6 +375,7 @@ namespace SKSE
 		enum
 		{
 			kVersionIndependentEx_NoStructUse = 1 << 0,
+			kVersionIndependentEx_AddressLibraryV5 = 1 << 1,
 		};
 
 		constexpr void PluginVersion(REL::Version a_version) noexcept { pluginVersion = a_version.pack(); }
@@ -393,7 +394,20 @@ namespace SKSE
 
 		[[nodiscard]] constexpr std::string_view GetAuthorEmail() const noexcept { return std::string_view{ supportEmail }; }
 
-		constexpr void UsesAddressLibrary() noexcept { versionIndependence |= kVersionIndependent_AddressLibraryPostAE; }
+		/**
+		 * Declares that the plugin locates the game through Address Library.
+		 *
+		 * <p>
+		 * The 1.7.99+ address library files use format 5, which SKSE 2.3.0+ only hands to plugins that declare
+		 * <code>kVersionIndependentEx_AddressLibraryV5</code>. <code>REL::IDDatabase</code> reads that format, so
+		 * the flag is set together with the classic address library bit.
+		 * </p>
+		 */
+		constexpr void UsesAddressLibrary() noexcept
+		{
+			versionIndependence |= kVersionIndependent_AddressLibraryPostAE;
+			versionIndependenceEx |= kVersionIndependentEx_AddressLibraryV5;
+		}
 		constexpr void UsesSigScanning() noexcept { versionIndependence |= kVersionIndependent_Signatures; }
 		constexpr void UsesUpdatedStructs() noexcept { versionIndependence |= kVersionIndependent_StructsPost629; }
 
@@ -615,6 +629,13 @@ namespace SKSE
 			 * change. CommonLibSSE NG defaults to flagging a plugin independent because it supports
 			 * both struct layouts in a single plugin. If your plugin has any RE'd structs that have
 			 * changed you should override this.
+			 *
+			 * <p>
+			 * This dword is exported to SKSE as <code>versionIndependenceEx</code>. When the plugin declares
+			 * Address Library compatibility, <code>PluginDeclaration</code> also raises the format-5 bit in it
+			 * (<code>PluginVersionData::kVersionIndependentEx_AddressLibraryV5</code>) so SKSE 2.3.0+ loads the
+			 * plugin on Skyrim 1.7.99 and later; <code>GetStructCompatibility()</code> masks that bit back out.
+			 * </p>
 			 */
 			const StructCompatibility StructCompatibility{ StructCompatibility::Independent };
 
@@ -643,7 +664,7 @@ namespace SKSE
 		static_assert(offsetof(PluginDeclarationInfo, MinimumSKSEVersion) == 0x348);
 
 		constexpr PluginDeclaration(PluginDeclarationInfo info) noexcept :
-			_data(std::move(info)) {}
+			_data(WithAddressLibraryFormatFlag(std::move(info))) {}
 
 		[[nodiscard]] constexpr REL::Version GetVersion() const noexcept
 		{
@@ -667,7 +688,17 @@ namespace SKSE
 
 		[[nodiscard]] constexpr StructCompatibility GetStructCompatibility() const noexcept
 		{
-			return _data.StructCompatibility;
+			return static_cast<StructCompatibility>(
+				static_cast<std::uint32_t>(_data.StructCompatibility) & ~kAddressLibraryV5Flag);
+		}
+
+		/**
+		 * Whether the exported declaration tells SKSE that this plugin reads the format-5 (Skyrim 1.7.99+)
+		 * address library files.
+		 */
+		[[nodiscard]] constexpr bool DeclaresAddressLibraryV5() const noexcept
+		{
+			return (static_cast<std::uint32_t>(_data.StructCompatibility) & kAddressLibraryV5Flag) != 0;
 		}
 
 		[[nodiscard]] constexpr const RuntimeCompatibility& GetRuntimeCompatibility() const noexcept
@@ -687,6 +718,25 @@ namespace SKSE
 		{
 			kVersion = 1,
 		};
+
+		static constexpr std::uint32_t kAddressLibraryV5Flag = PluginVersionData::kVersionIndependentEx_AddressLibraryV5;
+
+		[[nodiscard]] static constexpr PluginDeclarationInfo WithAddressLibraryFormatFlag(PluginDeclarationInfo a_info) noexcept
+		{
+			if (!a_info.RuntimeCompatibility.UsesAddressLibrary()) {
+				return a_info;
+			}
+			return PluginDeclarationInfo{
+				.Version = a_info.Version,
+				.Name = a_info.Name,
+				.Author = a_info.Author,
+				.SupportEmail = a_info.SupportEmail,
+				.StructCompatibility = static_cast<StructCompatibility>(
+					static_cast<std::uint32_t>(a_info.StructCompatibility) | kAddressLibraryV5Flag),
+				.RuntimeCompatibility = a_info.RuntimeCompatibility,
+				.MinimumSKSEVersion = a_info.MinimumSKSEVersion
+			};
+		}
 
 		[[maybe_unused]] const std::uint32_t         _dataVersion{ kVersion };
 		[[maybe_unused]] const PluginDeclarationInfo _data;
