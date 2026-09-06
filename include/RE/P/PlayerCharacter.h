@@ -978,17 +978,46 @@ namespace RE
             VR_PLAYER_RUNTIME_DATA_CONTENT
 		};
 
-		// Runtime data accessors
-		RUNTIME_DATA_ACCESSOR_VERSIONED_EX(PLAYER_RUNTIME_DATA, GetPlayerRuntimeData, SKSE::RUNTIME_SSE_1_6_629, 0x3D8, 0x3E0);
+		// Runtime data accessors.
+		//
+		// Skyrim 1.7.99 added one BSTEventSink base at 0x2D8, so the three BSTEventSource bases and the
+		// whole runtime-data block sit 0x8 higher than on 1.6.629+ (block at 0x3E8, object size 0xBF0).
+		// Read off the 1.7.99 executable: the destructor tears down the quest-targets map at 0x5A8, the
+		// quest log at 0x580, the crime maps at 0x3F0/0x420, the perk arrays at 0x4C0/0x4D8/0x4F0 and the
+		// tint arrays at 0xB20/0xB38, and the deleting destructor frees 0xBF0 bytes. PlayerRuntimeOffset
+		// applies that shift on top of the SE / VR / AE-629 anchors every accessor below declares.
+		[[nodiscard]] static std::ptrdiff_t PlayerRuntimeOffset(std::ptrdiff_t a_se, std::ptrdiff_t a_vr, std::ptrdiff_t a_ae) noexcept
+		{
+			if SKYRIM_REL_VR_CONSTEXPR (REL::Module::IsVR()) {
+				return a_vr;
+			}
+			const auto version = REL::Module::get().version();
+			if (version < SKSE::RUNTIME_SSE_1_6_629) {
+				return a_se;
+			}
+			return version < SKSE::RUNTIME_SSE_1_7_99 ? a_ae : a_ae + kRuntimeShift_1_7_99;
+		}
+
+#define PLAYER_MEMBER_ACCESSOR(StructType, FuncName, SEOffset, VROffset, AEOffset)                          \
+	[[nodiscard]] inline StructType& FuncName() noexcept                                                    \
+	{                                                                                                       \
+		return REL::RelocateMember<StructType>(this, PlayerRuntimeOffset(SEOffset, VROffset, AEOffset));    \
+	}                                                                                                       \
+	[[nodiscard]] inline const StructType& FuncName() const noexcept                                        \
+	{                                                                                                       \
+		return REL::RelocateMember<StructType>(this, PlayerRuntimeOffset(SEOffset, VROffset, AEOffset));    \
+	}
+
+		PLAYER_MEMBER_ACCESSOR(PLAYER_RUNTIME_DATA, GetPlayerRuntimeData, 0x3D8, 0x3D8, 0x3E0);
 		// VR's block starts 0x18 later than SE's 0x3D8 anchor (3 extra VR-only BSTEventSink members);
 		// matches GetVRNodeData's own 0x3F0 anchor below.
 		VR_RUNTIME_DATA_ACCESSOR(VR_PLAYER_RUNTIME_DATA, GetVRPlayerRuntimeData, 0x3F0);
 
-		RUNTIME_MEMBER_ACCESSOR_VERSIONED(CrimeValue, GetCrimeValue, SKSE::RUNTIME_SSE_1_6_629, 0x3E0, 0x9D0, 0x3E8);
+		PLAYER_MEMBER_ACCESSOR(CrimeValue, GetCrimeValue, 0x3E0, 0x9D0, 0x3E8);
 
-		RUNTIME_MEMBER_ACCESSOR_VERSIONED(RaceData, GetRaceData, SKSE::RUNTIME_SSE_1_6_629, 0xB30, 0x1228, 0xB38);
+		PLAYER_MEMBER_ACCESSOR(RaceData, GetRaceData, 0xB30, 0x1228, 0xB38);
 
-		RUNTIME_MEMBER_ACCESSOR_VERSIONED(GameStateData, GetGameStatsData, SKSE::RUNTIME_SSE_1_6_629, 0xAF8, 0x11F4, 0xB00);
+		PLAYER_MEMBER_ACCESSOR(GameStateData, GetGameStatsData, 0xAF8, 0x11F4, 0xB00);
 
 		// #207: cross-VR plugins had no safe way to reach these three (SE/AE-only direct member
 		// access silently reads garbage under EXCLUSIVE_SKYRIM_VR since VR's layout differs
@@ -996,13 +1025,16 @@ namespace RE
 		// ConsoleFunc::handler::ShowQuestTargets (questTargetsLock), and PlayerCharacter::Revert
 		// plus WriteToSaveGame/FinishLoadGame (questLog, questTargets) in all three binaries.
 		using QuestTargetsMap = BSTHashMap<TESQuest*, BSTArray<TESQuestTarget*>*>;
-		RUNTIME_MEMBER_ACCESSOR_VERSIONED(BSSpinLock, GetQuestTargetsLock, SKSE::RUNTIME_SSE_1_6_629, 0x3D8, 0x9C8, 0x3E0);
-		RUNTIME_MEMBER_ACCESSOR_VERSIONED(BSSimpleList<TESQuestStageItem*>, GetQuestLog, SKSE::RUNTIME_SSE_1_6_629, 0x570, 0xB60, 0x578);
-		RUNTIME_MEMBER_ACCESSOR_VERSIONED(QuestTargetsMap, GetQuestTargets, SKSE::RUNTIME_SSE_1_6_629, 0x598, 0xB88, 0x5A0);
+		PLAYER_MEMBER_ACCESSOR(BSSpinLock, GetQuestTargetsLock, 0x3D8, 0x9C8, 0x3E0);
+		PLAYER_MEMBER_ACCESSOR(BSSimpleList<TESQuestStageItem*>, GetQuestLog, 0x570, 0xB60, 0x578);
+		PLAYER_MEMBER_ACCESSOR(BSTArray<BGSInstancedQuestObjective>, GetObjectives, 0x580, 0xB70, 0x588);
+		PLAYER_MEMBER_ACCESSOR(QuestTargetsMap, GetQuestTargets, 0x598, 0xB88, 0x5A0);
 
-		RUNTIME_MEMBER_ACCESSOR_VERSIONED(INFO_RUNTIME_DATA, GetInfoRuntimeData, SKSE::RUNTIME_SSE_1_6_629, 0x8E4, 0x8E4, 0x8EC);
+		PLAYER_MEMBER_ACCESSOR(INFO_RUNTIME_DATA, GetInfoRuntimeData, 0x8E4, 0x8E4, 0x8EC);
 
-		RUNTIME_MEMBER_ACCESSOR_VERSIONED(PlayerFlags, GetPlayerFlags, SKSE::RUNTIME_SSE_1_6_629, 0xBD8, 0x12D0, 0xBE0);
+		PLAYER_MEMBER_ACCESSOR(PlayerFlags, GetPlayerFlags, 0xBD8, 0x12D0, 0xBE0);
+
+#undef PLAYER_MEMBER_ACCESSOR
 
 		VR_ONLY_POINTER_ACCESSOR(VR_INFO_RUNTIME_DATA, GetVRInfoRuntimeData, 0xFE0);
 		VR_ONLY_POINTER_ACCESSOR(VR_NODE_DATA, GetVRNodeData, 0x3F0);
@@ -1015,6 +1047,8 @@ namespace RE
 #endif
 
 	private:
+		static constexpr std::ptrdiff_t kRuntimeShift_1_7_99 = 0x8;
+
 		bool CenterOnCell_Impl(const char* a_cellName, RE::TESObjectCELL* a_cell);
 	};
 	STATIC_ASSERT_SIZE(PlayerCharacter, 0xBE0, 0xBE8, 0x12D8, 0x1E8);

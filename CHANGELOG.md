@@ -1,3 +1,9 @@
+## [4.39.5](https://github.com/MinLL/CommonLibVR/compare/v4.39.4...v4.39.5) (2026-09-06)
+
+### Bug Fixes
+
+* **re:** `PlayerCharacter` runtime-data accessors (`GetPlayerRuntimeData`, `GetCrimeValue`, `GetRaceData`, `GetGameStatsData`, `GetQuestTargetsLock`, `GetQuestLog`, `GetQuestTargets`, `GetInfoRuntimeData`, `GetPlayerFlags`, new `GetObjectives`) read 0x8 higher on Skyrim 1.7.99+, where one added `BSTEventSink` base moved the block to 0x3E8 (object size 0xBF0). Found in-game: the quest-log scan read garbage on 1.7.99.
+
 ## [4.39.4](https://github.com/MinLL/CommonLibVR/compare/v4.39.3...v4.39.4) (2026-09-06)
 
 MIT continuation from v4.39.3, the last MIT release of CommonLibSSE NG.

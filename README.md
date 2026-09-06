@@ -17,10 +17,11 @@ It supports Skyrim Special Edition (SE), Skyrim Anniversary Edition (AE), and Sk
 >
 > Skyrim SE **1.7.99 / 1.7.104** support covers what a plugin needs to load and run: 1.7.x classifies as an
 > AE runtime (`REL::Module::ClassifyRuntime`), `REL::IDDatabase` reads the format-5 address library files,
-> `SKSE::PluginDeclaration` exports the SKSE 2.3.0 `AddressLibraryV5` bit, and `RE::SkyrimVM` gained
+> `SKSE::PluginDeclaration` exports the SKSE 2.3.0 `AddressLibraryV5` bit, `RE::SkyrimVM` gained
 > version-aware accessors (`GetImpl`, `GetScriptLoader`, `GetHandlePolicy`, `GetObjectBindPolicy`, the
-> runtime-data tails) for the member block that moved by `0x10`. The new 1.7.x input-event classes, input
-> devices and other engine additions are not modelled.
+> runtime-data tails) for the member block that moved by `0x10`, and `RE::PlayerCharacter`'s runtime-data
+> accessors follow the block that moved by `0x8`. `RE::Actor` and `RE::TESQuest` are unchanged on 1.7.x.
+> The new 1.7.x input-event classes, input devices and other engine additions are not modelled.
 
 ## Usage
 
