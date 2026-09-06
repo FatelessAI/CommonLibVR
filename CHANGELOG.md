@@ -1,3 +1,14 @@
+## [4.39.4](https://github.com/MinLL/CommonLibVR/compare/v4.39.3...v4.39.4) (2026-09-06)
+
+MIT continuation from v4.39.3, the last MIT release of CommonLibSSE NG.
+
+### Features
+
+* **rel:** classify Skyrim 1.7.x as an AE runtime and add `RUNTIME_SSE_1_7_99` / `RUNTIME_SSE_1_7_104`
+* **rel:** read the format-5 address library files that ship for Skyrim 1.7.99 and later
+* **skse:** export SKSE 2.3.0's `kVersionIndependentEx_AddressLibraryV5` bit for Address Library plugins
+* **re:** version-aware `SkyrimVM` accessors (`GetImpl`, `GetScriptLoader`, `GetHandlePolicy`, `GetObjectBindPolicy`, runtime-data tails) for the member block that moved by `0x10` on 1.7.99
+
 ## [4.39.3](https://github.com/alandtse/CommonLibVR/compare/v4.39.2...v4.39.3) (2026-07-24)
 
 ## [4.39.2](https://github.com/alandtse/CommonLibVR/compare/v4.39.1...v4.39.2) (2026-07-22)

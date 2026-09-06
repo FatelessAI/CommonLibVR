@@ -9,6 +9,19 @@
 CommonLibSSE NG is a fork of CharmedBaryon's CommonLibSSE-NG, itself a fork of CommonLibSSE, which tracks upstream updates but adds a number of enhancements.
 It supports Skyrim Special Edition (SE), Skyrim Anniversary Edition (AE), and Skyrim Virtual Reality (VR).
 
+> [!IMPORTANT]
+> **MinLL/CommonLibVR is an MIT continuation of CommonLibSSE NG**, branched from the last MIT release
+> (v4.39.3, commit `635c416`). Upstream relicensed to GPL-3.0 from v5.0.0; nothing from that history, or from
+> any tree derived from it, is merged here. Layout facts for newer game versions are taken from the game
+> binaries and the address library files themselves.
+>
+> Skyrim SE **1.7.99 / 1.7.104** support covers what a plugin needs to load and run: 1.7.x classifies as an
+> AE runtime (`REL::Module::ClassifyRuntime`), `REL::IDDatabase` reads the format-5 address library files,
+> `SKSE::PluginDeclaration` exports the SKSE 2.3.0 `AddressLibraryV5` bit, and `RE::SkyrimVM` gained
+> version-aware accessors (`GetImpl`, `GetScriptLoader`, `GetHandlePolicy`, `GetObjectBindPolicy`, the
+> runtime-data tails) for the member block that moved by `0x10`. The new 1.7.x input-event classes, input
+> devices and other engine additions are not modelled.
+
 ## Usage
 
 To develop a C++ project that uses CommonLibSSE, you'll want to have this code available for discovery, and included as a build dependency by your build manager. Below are examples using the `xmake` or `cmake` managers.
