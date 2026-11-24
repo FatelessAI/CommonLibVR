@@ -6,6 +6,10 @@
 
 TEST_CASE("PlayerCharacter/RuntimeDataOffsets")
 {
+#ifdef EXCLUSIVE_SKYRIM_VR
+	// IsVR() is a compile-time constant here, so the SE/AE version selection below is compiled out.
+	CHECK(RE::PlayerCharacter::PlayerRuntimeOffset(0x3D8, 0x9C8, 0x3E0) == 0x9C8);
+#else
 	SECTION("Skyrim SE 1.5.97 uses the SE anchor")
 	{
 		REQUIRE(REL::Module::mock(SKSE::RUNTIME_SSE_1_5_97, REL::Module::Runtime::SE, L"SkyrimSE.exe", 0x1000));
@@ -30,4 +34,5 @@ TEST_CASE("PlayerCharacter/RuntimeDataOffsets")
 		CHECK(RE::PlayerCharacter::PlayerRuntimeOffset(0xBD8, 0x12D0, 0xBE0) == 0xBE8);
 		REL::Module::reset();
 	}
+#endif
 }
