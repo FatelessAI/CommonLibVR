@@ -320,19 +320,19 @@ namespace RE
 			}
 		}
 #endif
-		SKYRIM_REL_VR_VIRTUAL void                      RemoveWeapon(BIPED_OBJECT equipIndex);          // 82 - { return; }
-		SKYRIM_REL_VR_VIRTUAL void                      Unk_83(void);                                   // 83 - { return; }
-		SKYRIM_REL_VR_VIRTUAL void                      SetObjectReference(TESBoundObject* a_object);   // 84 - sets flag 24 if the object has destructibles
-		SKYRIM_REL_VR_VIRTUAL void                      MoveHavok(bool a_forceRec);                     // 85
-		SKYRIM_REL_VR_VIRTUAL void                      GetLinearVelocity(NiPoint3& a_velocity) const;  // 86
-		SKYRIM_REL_VR_VIRTUAL void                      SetActionComplete(bool a_set);                  // 87 - { return; }
-		SKYRIM_REL_VR_VIRTUAL void                      SetMovementComplete(bool a_set);                // 88 - { return; }
-		SKYRIM_REL_VR_VIRTUAL void                      Disable();                                      // 89
-		SKYRIM_REL_VR_VIRTUAL void                      ResetInventory(bool a_leveledOnly);             // 8A
-		[[nodiscard]] SKYRIM_REL_VR_VIRTUAL NiNode*     GetFireNode();                                  // 8B - { return 0; }
-		SKYRIM_REL_VR_VIRTUAL void                      SetFireNode(NiNode* a_fireNode);                // 8C - { return; }
-		[[nodiscard]] SKYRIM_REL_VR_VIRTUAL NiAVObject* GetCurrent3D() const;                           // 8D - { return Get3D2(); }
-		[[nodiscard]] SKYRIM_REL_VR_VIRTUAL Explosion*  AsExplosion();                                  // 8E - { return 0; }
+		SKYRIM_REL_VR_VIRTUAL void                         RemoveWeapon(BIPED_OBJECT equipIndex);                                                // 82 - { return; }
+		SKYRIM_REL_VR_VIRTUAL void                         Unk_83(void);                                                                         // 83 - { return; }
+		SKYRIM_REL_VR_VIRTUAL void                         SetObjectReference(TESBoundObject* a_object);                                         // 84 - sets flag 24 if the object has destructibles
+		SKYRIM_REL_VR_VIRTUAL void                         MoveHavok(bool a_forceRec);                                                           // 85
+		SKYRIM_REL_VR_VIRTUAL void                         GetLinearVelocity(NiPoint3& a_velocity) const;                                        // 86
+		SKYRIM_REL_VR_VIRTUAL void                         SetActionComplete(bool a_set);                                                        // 87 - { return; }
+		SKYRIM_REL_VR_VIRTUAL void                         SetMovementComplete(bool a_set);                                                      // 88 - { return; }
+		SKYRIM_REL_VR_VIRTUAL void                         Disable();                                                                            // 89
+		SKYRIM_REL_VR_VIRTUAL void                         ResetInventory(bool a_leveledOnly);                                                   // 8A
+		[[nodiscard]] SKYRIM_REL_VR_VIRTUAL NiNode*        GetFireNode();                                                                        // 8B - { return 0; }
+		SKYRIM_REL_VR_VIRTUAL void                         SetFireNode(NiNode* a_fireNode);                                                      // 8C - { return; }
+		[[nodiscard]] SKYRIM_REL_VR_VIRTUAL NiAVObject*    GetCurrent3D() const;                                                                 // 8D - { return Get3D2(); }
+		[[nodiscard]] SKYRIM_REL_VR_VIRTUAL Explosion*     AsExplosion();                                                                        // 8E - { return 0; }
 		[[nodiscard]] SKYRIM_REL_VR_VIRTUAL Projectile*    AsProjectile();                                                                       // 8F - { return 0; }
 		SKYRIM_REL_VR_VIRTUAL bool                         OnAddCellPerformQueueReference(TESObjectCELL& a_cell) const;                          // 90 - { return true; }
 		SKYRIM_REL_VR_VIRTUAL void                         DoMoveToHigh();                                                                       // 91 - { return; }
