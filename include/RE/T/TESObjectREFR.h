@@ -326,18 +326,16 @@ namespace RE
 		SKYRIM_REL_VR_VIRTUAL void                      MoveHavok(bool a_forceRec);                     // 85
 		SKYRIM_REL_VR_VIRTUAL void                      GetLinearVelocity(NiPoint3& a_velocity) const;  // 86
 		SKYRIM_REL_VR_VIRTUAL void                      SetActionComplete(bool a_set);                  // 87 - { return; }
-		SKYRIM_REL_VR_VIRTUAL void                      SetMovementComplete(bool a_set);                // 89 - { return; }
-		SKYRIM_REL_VR_VIRTUAL void                      Disable();                                      // 8A
-		SKYRIM_REL_VR_VIRTUAL void                      ResetInventory(bool a_leveledOnly);             // 8B
-		SKYRIM_REL_VR_VIRTUAL void                      Unk_8C(void);                                   // 8C - real slot; checks a field at +0x430, conditionally calls cleanup
-		[[nodiscard]] SKYRIM_REL_VR_VIRTUAL NiNode*     GetFireNode();                                  // 8D - { return 0; }
-		SKYRIM_REL_VR_VIRTUAL void                      SetFireNode(NiNode* a_fireNode);                // 8E - { return; }
-		[[nodiscard]] SKYRIM_REL_VR_VIRTUAL NiAVObject* GetCurrent3D() const;                           // 8F - { return Get3D2(); }
-		[[nodiscard]] SKYRIM_REL_VR_VIRTUAL Explosion*  AsExplosion();                                  // 90 - { return 0; }
-		// UNVERIFIED - unverified past this point (2026-07); slots need re-confirming against SkyrimVR.exe
-		[[nodiscard]] SKYRIM_REL_VR_VIRTUAL Projectile*    AsProjectile();                                                                       // UNVERIFIED - { return 0; }
-		SKYRIM_REL_VR_VIRTUAL bool                         OnAddCellPerformQueueReference(TESObjectCELL& a_cell) const;                          // UNVERIFIED - { return true; }
-		SKYRIM_REL_VR_VIRTUAL void                         DoMoveToHigh();                                                                       // UNVERIFIED - { return; }
+		SKYRIM_REL_VR_VIRTUAL void                      SetMovementComplete(bool a_set);                // 88 - { return; }
+		SKYRIM_REL_VR_VIRTUAL void                      Disable();                                      // 89
+		SKYRIM_REL_VR_VIRTUAL void                      ResetInventory(bool a_leveledOnly);             // 8A
+		[[nodiscard]] SKYRIM_REL_VR_VIRTUAL NiNode*     GetFireNode();                                  // 8B - { return 0; }
+		SKYRIM_REL_VR_VIRTUAL void                      SetFireNode(NiNode* a_fireNode);                // 8C - { return; }
+		[[nodiscard]] SKYRIM_REL_VR_VIRTUAL NiAVObject* GetCurrent3D() const;                           // 8D - { return Get3D2(); }
+		[[nodiscard]] SKYRIM_REL_VR_VIRTUAL Explosion*  AsExplosion();                                  // 8E - { return 0; }
+		[[nodiscard]] SKYRIM_REL_VR_VIRTUAL Projectile*    AsProjectile();                                                                       // 8F - { return 0; }
+		SKYRIM_REL_VR_VIRTUAL bool                         OnAddCellPerformQueueReference(TESObjectCELL& a_cell) const;                          // 90 - { return true; }
+		SKYRIM_REL_VR_VIRTUAL void                         DoMoveToHigh();                                                                       // 91 - { return; }
 		SKYRIM_REL_VR_VIRTUAL void                         TryMoveToMiddleLow();                                                                 // 92 - { return; }
 		SKYRIM_REL_VR_VIRTUAL bool                         TryChangeSkyCellActorsProcessLevel();                                                 // 93 - { return false; }
 		SKYRIM_REL_VR_VIRTUAL void                         Unk_94(void);                                                                         // 94 - { return; }
